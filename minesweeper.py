@@ -1,13 +1,27 @@
-import itertools
 import random
 
 
 class Minesweeper:
     """
-    Minesweeper game representation
+    Represents a Minesweeper game.
+
+    Attributes:
+        height (int): The height of the game board.
+        width (int): The width of the game board.
+        mines (set of tuples): A set containing the coordinates (i, j) of all mines.
+        board (list of lists): A 2D list representing the game board where each element is a boolean indicating whether a mine is present.
+        mines_found (set of tuples): A set containing the coordinates of mines that have been found.
     """
 
     def __init__(self, height=8, width=8, mines=8):
+        """
+        Initializes a new game of Minesweeper.
+
+        Args:
+            height (int): The height of the game board (default is 8).
+            width (int): The width of the game board (default is 8).
+            mines (int): The number of mines on the board (default is 8).
+        """
         # Set initial width, height, and number of mines
         self.height = height
         self.width = width
@@ -34,8 +48,8 @@ class Minesweeper:
 
     def print(self):
         """
-        Prints a text-based representation
-        of where mines are located.
+        Prints a text representation of the game board to the console.
+        Mines are represented by 'X', and empty spaces by ' '.
         """
         for i in range(self.height):
             print("--" * self.width + "-")
@@ -48,16 +62,28 @@ class Minesweeper:
         print("--" * self.width + "-")
 
     def is_mine(self, cell):
+        """
+        Checks if a given cell contains a mine.
+
+        Args:
+            cell (tuple): A tuple (i, j) representing the cell coordinates.
+
+        Returns:
+            bool: True if the cell contains a mine, False otherwise.
+        """
         i, j = cell
         return self.board[i][j]
 
     def nearby_mines(self, cell):
         """
-        Returns the number of mines that are
-        within one row and column of a given cell,
-        not including the cell itself.
-        """
+        Counts the number of mines adjacent to a given cell.
 
+        Args:
+            cell (tuple): A tuple (i, j) representing the cell coordinates.
+
+        Returns:
+            int: The number of mines surrounding the given cell.
+        """
         # Keep count of nearby mines
         count = 0
 
@@ -77,31 +103,71 @@ class Minesweeper:
 
     def won(self):
         """
-        Checks if all mines have been flagged.
+        Checks if the player has won the game by finding all mines.
+
+        Returns:
+            bool: True if all mines have been found, False otherwise.
         """
         return self.mines_found == self.mines
 
 
 class Sentence:
     """
-    Logical statement about a Minesweeper game
-    A sentence consists of a set of board cells,
-    and a count of the number of those cells which are mines.
+    Represents a logical statement about the Minesweeper game.
+    A statement consists of a set of cells and the count of mines in these cells.
+
+    Attributes:
+        cells (set of tuples): A set of tuples representing the coordinates of cells.
+        count (int): The number of mines in these cells.
     """
 
     def __init__(self, cells, count):
+        """
+        Initializes a new logical sentence.
+
+        Args:
+            cells (set of tuples): A set of coordinates (i, j) representing cells.
+            count (int): The number of mines in these cells.
+        """
         self.cells = set(cells)
         self.count = count
 
     def __eq__(self, other):
+        """
+        Checks equality between two Sentence instances.
+
+        This method is used to compare two Sentence objects. Two sentences are considered equal
+        if they have the same cells and the same count of mines.
+
+        Args:
+            other (Sentence): Another Sentence object to compare with.
+
+        Returns:
+            bool: True if both sentences have the same cells and mine count, False otherwise.
+        """
         return self.cells == other.cells and self.count == other.count
 
     def __str__(self):
+        """
+        Provides a string representation of the Sentence.
+
+        This method returns a string that shows the cells in the sentence and the count of mines in these cells,
+        making it easier to understand the state of the sentence at a glance.
+
+        Returns:
+            str: A string representation of the Sentence.
+        """
         return f"{self.cells} = {self.count}"
 
     def known_mines(self):
         """
-        Returns the set of all cells in self.cells known to be mines.
+        Identifies cells in the sentence known to be mines.
+
+        This method returns a set of all cells in this sentence that are definitely mines.
+        This can be inferred when the number of cells equals the count of mines.
+
+        Returns:
+            set: A set of tuples representing the coordinates of known mine cells.
         """
         if len(self.cells) == self.count:
             return set(self.cells)
@@ -109,7 +175,13 @@ class Sentence:
 
     def known_safes(self):
         """
-        Returns the set of all cells in self.cells known to be safe.
+        Identifies cells in the sentence known to be safe.
+
+        This method returns a set of all cells in this sentence that are definitely safe.
+        This can be inferred when the count of mines in the sentence is zero.
+
+        Returns:
+            set: A set of tuples representing the coordinates of known safe cells.
         """
         if self.count == 0:
             return set(self.cells)
@@ -117,8 +189,13 @@ class Sentence:
 
     def mark_mine(self, cell):
         """
-        Updates internal knowledge representation given the fact that
-        a cell is known to be a mine.
+        Updates the sentence when a cell is known to be a mine.
+
+        When a cell in the sentence is identified as a mine, this method removes it from the sentence
+        and decreases the count of mines accordingly.
+
+        Args:
+            cell (tuple): A tuple (i, j) representing the coordinates of the mine.
         """
         if cell in self.cells:
             self.cells.remove(cell)
@@ -126,8 +203,13 @@ class Sentence:
 
     def mark_safe(self, cell):
         """
-        Updates internal knowledge representation given the fact that
-        a cell is known to be safe.
+        Updates the sentence when a cell is known to be safe.
+
+        When a cell in the sentence is identified as safe, this method removes it from the sentence.
+        The count of mines remains unchanged.
+
+        Args:
+            cell (tuple): A tuple (i, j) representing the coordinates of the safe cell.
         """
         if cell in self.cells:
             self.cells.remove(cell)
@@ -135,10 +217,25 @@ class Sentence:
 
 class MinesweeperAI:
     """
-    Minesweeper game player
+    Represents an AI player for the Minesweeper game.
+
+    Attributes:
+        height (int): The height of the game board.
+        width (int): The width of the game board.
+        moves_made (set of tuples): A set of tuples representing the coordinates of moves made.
+        mines (set of tuples): A set containing the coordinates of discovered mines.
+        safes (set of tuples): A set containing the coordinates of discovered safe cells.
+        knowledge (list of Sentences): A list of Sentences representing the AI's knowledge about the game.
     """
 
     def __init__(self, height=8, width=8):
+        """
+        Initializes a new AI player for Minesweeper.
+
+        Args:
+            height (int): The height of the game board (default is 8).
+            width (int): The width of the game board (default is 8).
+        """
         # Set initial height and width
         self.height = height
         self.width = width
@@ -155,8 +252,13 @@ class MinesweeperAI:
 
     def mark_mine(self, cell):
         """
-        Marks a cell as a mine, and updates all knowledge
-        to mark that cell as a mine as well.
+        Marks a cell as a mine in the AI's knowledge base.
+
+        Updates the AI's knowledge to reflect that a specific cell is a mine, and adjusts
+        all sentences in the knowledge base accordingly.
+
+        Args:
+            cell (tuple): A tuple (i, j) representing the coordinates of the cell identified as a mine.
         """
         self.mines.add(cell)
         for sentence in self.knowledge:
@@ -164,8 +266,13 @@ class MinesweeperAI:
 
     def mark_safe(self, cell):
         """
-        Marks a cell as safe, and updates all knowledge
-        to mark that cell as safe as well.
+        Marks a cell as safe in the AI's knowledge base.
+
+        Updates the AI's knowledge to reflect that a specific cell is safe, and adjusts
+        all sentences in the knowledge base accordingly.
+
+        Args:
+            cell (tuple): A tuple (i, j) representing the coordinates of the cell identified as safe.
         """
         self.safes.add(cell)
         for sentence in self.knowledge:
@@ -173,8 +280,14 @@ class MinesweeperAI:
 
     def add_knowledge(self, cell, count):
         """
-        Called when the Minesweeper board tells us, for a given
-        safe cell, how many neighboring cells have mines in them.
+        Updates the AI's knowledge base when a cell is revealed.
+
+        This method is called with a newly revealed cell and the number of mines surrounding it.
+        It updates the AI's knowledge base with this new information and revises existing knowledge accordingly.
+
+        Args:
+            cell (tuple): The coordinates (i, j) of the cell that was revealed.
+            count (int): The number of mines surrounding the revealed cell.
         """
         self.moves_made.add(cell)
         self.mark_safe(cell)
@@ -206,7 +319,10 @@ class MinesweeperAI:
 
     def update_knowledge(self):
         """
-        Updates the AI's knowledge base about the Minesweeper game.
+        Iteratively updates the knowledge base of the AI.
+
+        This method goes through the knowledge base to identify and mark new mines and safes.
+        It also refines the existing sentences based on the new information and removes redundant sentences.
         """
         updated = True
         while updated:
@@ -243,12 +359,13 @@ class MinesweeperAI:
 
     def make_safe_move(self):
         """
-        Returns a safe cell to choose on the Minesweeper board.
-        The move must be known to be safe, and not already a move
-        that has been made.
+        Determines a safe move for the AI to make.
 
-        This function may use the knowledge in self.mines, self.safes
-        and self.moves_made, but should not modify any of those values.
+        Returns a cell that is known to be safe and has not been already chosen. This method
+        does not modify the game state but only provides a recommendation based on current knowledge.
+
+        Returns:
+            tuple or None: The coordinates (i, j) of a safe cell to move to, or None if no safe moves are available.
         """
         for move in self.safes:
             if move not in self.moves_made:
@@ -257,10 +374,13 @@ class MinesweeperAI:
 
     def make_random_move(self):
         """
-        Returns a move to make on the Minesweeper board.
-        Should choose randomly among cells that:
-            1) have not already been chosen, and
-            2) are not known to be mines
+        Chooses a random move from the available options.
+
+        This method is used when the AI does not have sufficient knowledge to determine a safe move.
+        It randomly selects a cell that has not been chosen yet and is not known to be a mine.
+
+        Returns:
+            tuple or None: The coordinates (i, j) of the cell chosen, or None if no moves are possible.
         """
         for i in range(self.height):
             for j in range(self.width):
