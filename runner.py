@@ -81,6 +81,9 @@ pygame.init()
 size = width, height = 1000, 800
 screen = pygame.display.set_mode(size)
 
+# Set the window title
+pygame.display.set_caption("Minesweeper")
+
 # Initialize timer
 start_time = pygame.time.get_ticks()
 

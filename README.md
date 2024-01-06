@@ -3,6 +3,8 @@
 ## Overview
 This program implements a classic Minesweeper game with an added AI assistant. The game includes various difficulty levels and offers a graphical interface using Pygame. The AI player can make moves based on the knowledge it accumulates during the game.
 
+![Minesweeper_Screenshot](minesweeper_screenshot.webp)
+
 ## Features
 - **Graphical Interface**: Utilizes Pygame for a user-friendly gaming experience.
 - **Multiple Difficulty Levels**: Options for 'easy', 'medium', and 'hard' to cater to different skill levels.
