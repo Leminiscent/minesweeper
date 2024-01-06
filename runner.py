@@ -36,12 +36,13 @@ def reset_game():
     Resets the game state, including the game board, AI, and timer.
     Adjusts the size of the game elements based on the current difficulty.
     """
-    global game, ai, revealed, flags, lost, start_time, cell_size, flag, mine
+    global game, ai, revealed, flags, lost, start_time, cell_size, flag, mine, game_active
     game = Minesweeper(height=HEIGHT, width=WIDTH, mines=MINES)
     ai = MinesweeperAI(height=HEIGHT, width=WIDTH)
     revealed = set()
     flags = set()
     lost = False
+    game_active = True
     start_time = pygame.time.get_ticks()  # Reset the timer
 
     # Adjust cell size based on the difficulty
@@ -223,6 +224,10 @@ while True:
         mediumFont,
     )
 
+    # Check if the game is lost or won
+    if lost or game.mines == flags:
+        game_active = False
+
     # Display text
     text = "You lost!" if lost else "You won!" if game.mines == flags else ""
     text = mediumFont.render(text, True, WHITE)
@@ -234,10 +239,15 @@ while True:
 
     left, _, right = pygame.mouse.get_pressed()
 
-    # Display timer
-    current_time = pygame.time.get_ticks()
-    elapsed_time = (current_time - start_time) // 1000
-    timer_surface = smallFont.render(f"Time elapsed: {elapsed_time} s", True, WHITE)
+    # Update and display timer only if the game is still active
+    if game_active:
+        current_time = pygame.time.get_ticks()
+        elapsed_time = (current_time - start_time) // 1000
+        timer_surface = smallFont.render(f"Time elapsed: {elapsed_time} s", True, WHITE)
+    else:
+        # If game is not active, just render the final time
+        timer_surface = smallFont.render(f"Final time: {elapsed_time} s", True, WHITE)
+
     timer_rect = timer_surface.get_rect()
     timer_rect.topleft = ((2 / 3) * width + BOARD_PADDING, 20)
     screen.blit(timer_surface, timer_rect)
