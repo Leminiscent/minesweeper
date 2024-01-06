@@ -4,19 +4,51 @@ import time
 
 from minesweeper import Minesweeper, MinesweeperAI
 
-HEIGHT = 8
-WIDTH = 8
-MINES = 8
-
 # Colors
 BLACK = (0, 0, 0)
 GRAY = (180, 180, 180)
 WHITE = (255, 255, 255)
 
+# Initial board settings
+WIDTH = 8
+HEIGHT = 8
+MINES = 10
+
+
+# Define difficulty levels
+def set_difficulty(level):
+    global WIDTH, HEIGHT, MINES
+    difficulties = {"easy": (8, 8, 10), "medium": (16, 16, 40), "hard": (24, 24, 99)}
+    WIDTH, HEIGHT, MINES = difficulties[level]
+    reset_game()
+
+
+def reset_game():
+    global game, ai, revealed, flags, lost, start_time, cell_size, flag, mine
+    game = Minesweeper(height=HEIGHT, width=WIDTH, mines=MINES)
+    ai = MinesweeperAI(height=HEIGHT, width=WIDTH)
+    revealed = set()
+    flags = set()
+    lost = False
+    start_time = pygame.time.get_ticks()  # Reset the timer
+
+    # Adjust cell size based on the difficulty
+    board_width = ((2 / 3) * width) - (BOARD_PADDING * 2)
+    board_height = height - (BOARD_PADDING * 2)
+    cell_size = int(min(board_width / WIDTH, board_height / HEIGHT))
+
+    # Rescale flag and mine images
+    flag = pygame.transform.scale(flag, (cell_size, cell_size))
+    mine = pygame.transform.scale(mine, (cell_size, cell_size))
+
+
 # Create game
 pygame.init()
-size = width, height = 600, 400
+size = width, height = 1000, 800
 screen = pygame.display.set_mode(size)
+
+# Initialize timer
+start_time = pygame.time.get_ticks()
 
 # Fonts
 OPEN_SANS = "assets/fonts/OpenSans-Regular.ttf"
@@ -37,20 +69,13 @@ flag = pygame.transform.scale(flag, (cell_size, cell_size))
 mine = pygame.image.load("assets/images/mine.png")
 mine = pygame.transform.scale(mine, (cell_size, cell_size))
 
-# Create game and AI agent
-game = Minesweeper(height=HEIGHT, width=WIDTH, mines=MINES)
-ai = MinesweeperAI(height=HEIGHT, width=WIDTH)
-
-# Keep track of revealed cells, flagged cells, and if a mine was hit
-revealed = set()
-flags = set()
-lost = False
+# Create game and AI agent, initialize game state variables
+reset_game()
 
 # Show instructions initially
 instructions = True
 
 while True:
-
     # Check if game quit
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -60,7 +85,6 @@ while True:
 
     # Show game instructions
     if instructions:
-
         # Title
         title = largeFont.render("Play Minesweeper", True, WHITE)
         titleRect = title.get_rect()
@@ -71,7 +95,8 @@ while True:
         rules = [
             "Click a cell to reveal it.",
             "Right-click a cell to mark it as a mine.",
-            "Mark all mines successfully to win!"
+            "Mark all mines successfully to win!",
+            "Choose a difficulty below to begin playing.",
         ]
         for i, rule in enumerate(rules):
             line = smallFont.render(rule, True, WHITE)
@@ -79,21 +104,24 @@ while True:
             lineRect.center = ((width / 2), 150 + 30 * i)
             screen.blit(line, lineRect)
 
-        # Play game button
-        buttonRect = pygame.Rect((width / 4), (3 / 4) * height, width / 2, 50)
-        buttonText = mediumFont.render("Play Game", True, BLACK)
-        buttonTextRect = buttonText.get_rect()
-        buttonTextRect.center = buttonRect.center
-        pygame.draw.rect(screen, WHITE, buttonRect)
-        screen.blit(buttonText, buttonTextRect)
+        # Difficulty buttons
+        difficulty_levels = ["easy", "medium", "hard"]
+        for i, level in enumerate(difficulty_levels):
+            buttonRect = pygame.Rect((width / 4), 250 + 60 * i, width / 2, 50)
+            buttonText = mediumFont.render(level.capitalize(), True, BLACK)
+            buttonTextRect = buttonText.get_rect()
+            buttonTextRect.center = buttonRect.center
+            pygame.draw.rect(screen, WHITE, buttonRect)
+            screen.blit(buttonText, buttonTextRect)
 
-        # Check if play button clicked
-        click, _, _ = pygame.mouse.get_pressed()
-        if click == 1:
-            mouse = pygame.mouse.get_pos()
-            if buttonRect.collidepoint(mouse):
-                instructions = False
-                time.sleep(0.3)
+            # Check if difficulty button is clicked
+            click, _, _ = pygame.mouse.get_pressed()
+            if click == 1:
+                mouse = pygame.mouse.get_pos()
+                if buttonRect.collidepoint(mouse):
+                    set_difficulty(level)
+                    instructions = False
+                    time.sleep(0.3)
 
         pygame.display.flip()
         continue
@@ -103,12 +131,12 @@ while True:
     for i in range(HEIGHT):
         row = []
         for j in range(WIDTH):
-
             # Draw rectangle for cell
             rect = pygame.Rect(
                 board_origin[0] + j * cell_size,
                 board_origin[1] + i * cell_size,
-                cell_size, cell_size
+                cell_size,
+                cell_size,
             )
             pygame.draw.rect(screen, GRAY, rect)
             pygame.draw.rect(screen, WHITE, rect, 3)
@@ -120,8 +148,7 @@ while True:
                 screen.blit(flag, rect)
             elif (i, j) in revealed:
                 neighbors = smallFont.render(
-                    str(game.nearby_mines((i, j))),
-                    True, BLACK
+                    str(game.nearby_mines((i, j))), True, BLACK
                 )
                 neighborsTextRect = neighbors.get_rect()
                 neighborsTextRect.center = rect.center
@@ -132,8 +159,10 @@ while True:
 
     # AI Move button
     aiButton = pygame.Rect(
-        (2 / 3) * width + BOARD_PADDING, (1 / 3) * height - 50,
-        (width / 3) - BOARD_PADDING * 2, 50
+        (2 / 3) * width + BOARD_PADDING,
+        (1 / 3) * height - 50,
+        (width / 3) - BOARD_PADDING * 2,
+        50,
     )
     buttonText = mediumFont.render("AI Move", True, BLACK)
     buttonRect = buttonText.get_rect()
@@ -143,13 +172,28 @@ while True:
 
     # Reset button
     resetButton = pygame.Rect(
-        (2 / 3) * width + BOARD_PADDING, (1 / 3) * height + 20,
-        (width / 3) - BOARD_PADDING * 2, 50
+        (2 / 3) * width + BOARD_PADDING,
+        (1 / 3) * height + 20,
+        (width / 3) - BOARD_PADDING * 2,
+        50,
     )
     buttonText = mediumFont.render("Reset", True, BLACK)
     buttonRect = buttonText.get_rect()
     buttonRect.center = resetButton.center
     pygame.draw.rect(screen, WHITE, resetButton)
+    screen.blit(buttonText, buttonRect)
+
+    # Main Menu button
+    mainMenuButton = pygame.Rect(
+        (2 / 3) * width + BOARD_PADDING,
+        (1 / 3) * height + 90,
+        (width / 3) - BOARD_PADDING * 2,
+        50,
+    )
+    buttonText = mediumFont.render("Main Menu", True, BLACK)
+    buttonRect = buttonText.get_rect()
+    buttonRect.center = mainMenuButton.center
+    pygame.draw.rect(screen, WHITE, mainMenuButton)
     screen.blit(buttonText, buttonRect)
 
     # Display text
@@ -162,6 +206,26 @@ while True:
     move = None
 
     left, _, right = pygame.mouse.get_pressed()
+
+    # Display timer
+    current_time = pygame.time.get_ticks()
+    elapsed_time = (current_time - start_time) // 1000
+    timer_surface = smallFont.render(f"Time: {elapsed_time} s", True, WHITE)
+    timer_rect = timer_surface.get_rect()
+    timer_rect.topleft = ((2 / 3) * width + BOARD_PADDING, 20)
+    screen.blit(timer_surface, timer_rect)
+
+    # Display mine counter
+    mines_left = MINES - len(flags)
+    mine_counter_surface = smallFont.render(
+        f"Mines left to mark: {mines_left}", True, WHITE
+    )
+    mine_counter_rect = mine_counter_surface.get_rect()
+    mine_counter_rect.topleft = (
+        (2 / 3) * width + BOARD_PADDING,
+        70,
+    )
+    screen.blit(mine_counter_surface, mine_counter_rect)
 
     # Check for a right-click to toggle flagging
     if right == 1 and not lost:
@@ -194,20 +258,23 @@ while True:
 
         # Reset game state
         elif resetButton.collidepoint(mouse):
-            game = Minesweeper(height=HEIGHT, width=WIDTH, mines=MINES)
-            ai = MinesweeperAI(height=HEIGHT, width=WIDTH)
-            revealed = set()
-            flags = set()
-            lost = False
+            reset_game()
+            continue
+
+        # Return to main menu
+        elif mainMenuButton.collidepoint(mouse):
+            instructions = True
             continue
 
         # User-made move
         elif not lost:
             for i in range(HEIGHT):
                 for j in range(WIDTH):
-                    if (cells[i][j].collidepoint(mouse)
-                            and (i, j) not in flags
-                            and (i, j) not in revealed):
+                    if (
+                        cells[i][j].collidepoint(mouse)
+                        and (i, j) not in flags
+                        and (i, j) not in revealed
+                    ):
                         move = (i, j)
 
     # Make move and update AI knowledge
