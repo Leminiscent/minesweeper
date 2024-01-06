@@ -224,7 +224,7 @@ while True:
     )
 
     # Display text
-    text = "Lost" if lost else "Won" if game.mines == flags else ""
+    text = "You lost!" if lost else "You won!" if game.mines == flags else ""
     text = mediumFont.render(text, True, WHITE)
     textRect = text.get_rect()
     textRect.center = ((5 / 6) * width, (2 / 3) * height)
@@ -237,7 +237,7 @@ while True:
     # Display timer
     current_time = pygame.time.get_ticks()
     elapsed_time = (current_time - start_time) // 1000
-    timer_surface = smallFont.render(f"Time: {elapsed_time} s", True, WHITE)
+    timer_surface = smallFont.render(f"Time elapsed: {elapsed_time} s", True, WHITE)
     timer_rect = timer_surface.get_rect()
     timer_rect.topleft = ((2 / 3) * width + BOARD_PADDING, 20)
     screen.blit(timer_surface, timer_rect)
