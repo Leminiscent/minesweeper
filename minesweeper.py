@@ -207,51 +207,39 @@ class MinesweeperAI:
     def update_knowledge(self):
         """
         Updates the AI's knowledge base about the Minesweeper game.
-
-        This method iteratively applies logical rules to the current knowledge base to infer new information.
-        It performs the following actions in a loop until no new information can be inferred:
-        - Identifies any cells that are definitely safe or mines based on the current sentences.
-        - Updates each sentence in the knowledge base accordingly, removing cells that are now identified as safe or mines and adjusting the count of mines if necessary.
-        - Removes empty sentences from the knowledge base.
-        - Checks for subsets among the sentences in the knowledge base. If one sentence is a subset of another, it infers a new sentence based on the difference between these two.
-
-        The loop continues until the knowledge base cannot be further refined, meaning no new safes or mines can be identified and no new sentences can be inferred.
-
-        This method plays a crucial role in the AI's ability to make informed decisions about where to move in the game by constantly updating its understanding of the game state.
         """
-        # Repeat until no new inferences can be made
-        while True:
+        updated = True
+        while updated:
+            updated = False
             new_safes = set()
             new_mines = set()
 
+            # Identify new safes and mines
             for sentence in self.knowledge:
                 new_safes |= sentence.known_safes()
                 new_mines |= sentence.known_mines()
 
-            # If no new safes or mines, break
-            if not new_safes and not new_mines:
-                break
+            if new_safes or new_mines:
+                updated = True
 
+            # Update sentences with new information
             for safe in new_safes:
                 self.mark_safe(safe)
             for mine in new_mines:
                 self.mark_mine(mine)
 
-            # Remove empty sentences
-            self.knowledge = [s for s in self.knowledge if len(s.cells) > 0]
+            # Remove empty sentences and update subset logic
+            new_knowledge = []
+            for sentence in self.knowledge:
+                if len(sentence.cells) > 0:
+                    new_knowledge.append(sentence)
+                    for other in self.knowledge:
+                        if sentence != other and sentence.cells.issubset(other.cells):
+                            other.cells -= sentence.cells
+                            other.count -= sentence.count
+                            updated = True
 
-            # Check for subsets
-            for sentence1 in self.knowledge:
-                for sentence2 in self.knowledge:
-                    if sentence1 != sentence2 and sentence1.cells.issubset(
-                        sentence2.cells
-                    ):
-                        inferred_sentence = Sentence(
-                            sentence2.cells - sentence1.cells,
-                            sentence2.count - sentence1.count,
-                        )
-                        if inferred_sentence not in self.knowledge:
-                            self.knowledge.append(inferred_sentence)
+            self.knowledge = new_knowledge
 
     def make_safe_move(self):
         """
