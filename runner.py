@@ -70,7 +70,7 @@ start_time = pygame.time.get_ticks()
 OPEN_SANS = "assets/fonts/OpenSans-Regular.ttf"
 smallFont = pygame.font.Font(OPEN_SANS, 20)
 mediumFont = pygame.font.Font(OPEN_SANS, 28)
-largeFont = pygame.font.Font(OPEN_SANS, 40)
+largeFont = pygame.font.Font(OPEN_SANS, 62)
 
 # Compute board size
 BOARD_PADDING = 20
@@ -102,23 +102,21 @@ while True:
     # Show game instructions
     if instructions:
         # Title
-        title = largeFont.render("Play Minesweeper", True, WHITE)
+        title = largeFont.render("Minesweeper", True, WHITE)
         titleRect = title.get_rect()
         titleRect.center = ((width / 2), 80)
         screen.blit(title, titleRect)
 
         # Rules
         rules = [
-            "Click a cell to reveal it.",
-            "Right-click a cell to mark it as a mine.",
-            "Uncover all safe cells to win!",
-            "Uncover a mine though, and you lose!",
+            "Click on a cell to reveal it, or right-click to mark it as a mine.",
+            "Uncover all safe cells to win, but uncover a mine and you lose!",
             "Choose a difficulty below to begin playing.",
         ]
         for i, rule in enumerate(rules):
             line = smallFont.render(rule, True, WHITE)
             lineRect = line.get_rect()
-            lineRect.center = ((width / 2), 150 + 40 * i)
+            lineRect.center = ((width / 2), 160 + 50 * i)
             screen.blit(line, lineRect)
 
         # Difficulty buttons
