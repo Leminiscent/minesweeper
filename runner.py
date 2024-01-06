@@ -110,7 +110,7 @@ while True:
         # Rules
         rules = [
             "Click on a cell to reveal it, or right-click to mark it as a mine.",
-            "Uncover all safe cells to win, but uncover a mine and you lose!",
+            "Mark every cell with a mine to win, but uncover a mine and you lose!",
             "Choose a difficulty below to begin playing.",
         ]
         for i, rule in enumerate(rules):
