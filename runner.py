@@ -4,7 +4,7 @@ import time
 
 from minesweeper import Minesweeper, MinesweeperAI
 
-# Colors
+# Define colors used in the game
 BLACK = (0, 0, 0)
 GRAY = (180, 180, 180)
 WHITE = (255, 255, 255)
@@ -18,8 +18,13 @@ HEIGHT = 8
 MINES = 10
 
 
-# Define difficulty levels
 def set_difficulty(level):
+    """
+    Sets the difficulty of the Minesweeper game.
+
+    Args:
+        level (str): The difficulty level ('easy', 'medium', 'hard').
+    """
     global WIDTH, HEIGHT, MINES
     difficulties = {"easy": (8, 8, 10), "medium": (16, 16, 40), "hard": (24, 24, 99)}
     WIDTH, HEIGHT, MINES = difficulties[level]
@@ -27,6 +32,10 @@ def set_difficulty(level):
 
 
 def reset_game():
+    """
+    Resets the game state, including the game board, AI, and timer.
+    Adjusts the size of the game elements based on the current difficulty.
+    """
     global game, ai, revealed, flags, lost, start_time, cell_size, flag, mine
     game = Minesweeper(height=HEIGHT, width=WIDTH, mines=MINES)
     ai = MinesweeperAI(height=HEIGHT, width=WIDTH)
@@ -46,7 +55,16 @@ def reset_game():
 
 
 def draw_button(button_rect, text, center_pos, screen, font):
-    """Draws a button with hover effect."""
+    """
+    Draws a button on the screen with a hover effect.
+
+    Args:
+        button_rect (Rect): The rectangle defining the button's size and position.
+        text (str): The text displayed on the button.
+        center_pos (tuple): The center position of the button.
+        screen (Surface): The Pygame surface to draw on.
+        font (Font): The font used for the button text.
+    """
     mouse = pygame.mouse.get_pos()
     if button_rect.collidepoint(mouse):
         pygame.draw.rect(screen, HOVER_COLOR, button_rect)  # Hover effect
@@ -58,7 +76,7 @@ def draw_button(button_rect, text, center_pos, screen, font):
     screen.blit(buttonText, buttonTextRect)
 
 
-# Create game
+# Pygame initialization
 pygame.init()
 size = width, height = 1000, 800
 screen = pygame.display.set_mode(size)
@@ -92,7 +110,8 @@ reset_game()
 instructions = True
 
 while True:
-    # Check if game quit
+    # Main game loop
+    # Handling quitting the game
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
