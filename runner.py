@@ -8,6 +8,9 @@ from minesweeper import Minesweeper, MinesweeperAI
 BLACK = (0, 0, 0)
 GRAY = (180, 180, 180)
 WHITE = (255, 255, 255)
+BG_COLOR = (50, 50, 60)
+BUTTON_COLOR = (70, 130, 180)
+HOVER_COLOR = (100, 150, 200)
 
 # Initial board settings
 WIDTH = 8
@@ -40,6 +43,19 @@ def reset_game():
     # Rescale flag and mine images
     flag = pygame.transform.scale(flag, (cell_size, cell_size))
     mine = pygame.transform.scale(mine, (cell_size, cell_size))
+
+
+def draw_button(button_rect, text, center_pos, screen, font):
+    """Draws a button with hover effect."""
+    mouse = pygame.mouse.get_pos()
+    if button_rect.collidepoint(mouse):
+        pygame.draw.rect(screen, HOVER_COLOR, button_rect)  # Hover effect
+    else:
+        pygame.draw.rect(screen, BUTTON_COLOR, button_rect)
+    buttonText = font.render(text, True, WHITE)
+    buttonTextRect = buttonText.get_rect()
+    buttonTextRect.center = center_pos
+    screen.blit(buttonText, buttonTextRect)
 
 
 # Create game
@@ -81,38 +97,36 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
 
-    screen.fill(BLACK)
+    screen.fill(BG_COLOR)
 
     # Show game instructions
     if instructions:
         # Title
         title = largeFont.render("Play Minesweeper", True, WHITE)
         titleRect = title.get_rect()
-        titleRect.center = ((width / 2), 50)
+        titleRect.center = ((width / 2), 80)
         screen.blit(title, titleRect)
 
         # Rules
         rules = [
             "Click a cell to reveal it.",
             "Right-click a cell to mark it as a mine.",
-            "Mark all mines successfully to win!",
+            "Uncover all safe cells to win!",
+            "Uncover a mine though, and you lose!",
             "Choose a difficulty below to begin playing.",
         ]
         for i, rule in enumerate(rules):
             line = smallFont.render(rule, True, WHITE)
             lineRect = line.get_rect()
-            lineRect.center = ((width / 2), 150 + 30 * i)
+            lineRect.center = ((width / 2), 150 + 40 * i)
             screen.blit(line, lineRect)
 
         # Difficulty buttons
         difficulty_levels = ["easy", "medium", "hard"]
         for i, level in enumerate(difficulty_levels):
-            buttonRect = pygame.Rect((width / 4), 250 + 60 * i, width / 2, 50)
-            buttonText = mediumFont.render(level.capitalize(), True, BLACK)
-            buttonTextRect = buttonText.get_rect()
-            buttonTextRect.center = buttonRect.center
-            pygame.draw.rect(screen, WHITE, buttonRect)
-            screen.blit(buttonText, buttonTextRect)
+            buttonRect = pygame.Rect((width / 4), 350 + 70 * i, width / 2, 50)
+            center_pos = (width / 2, 350 + 70 * i + 25)
+            draw_button(buttonRect, level.capitalize(), center_pos, screen, mediumFont)
 
             # Check if difficulty button is clicked
             click, _, _ = pygame.mouse.get_pressed()
@@ -157,44 +171,37 @@ while True:
             row.append(rect)
         cells.append(row)
 
-    # AI Move button
-    aiButton = pygame.Rect(
+    # Draw AI Move, Reset, and Main Menu buttons
+    ai_button_rect = pygame.Rect(
         (2 / 3) * width + BOARD_PADDING,
         (1 / 3) * height - 50,
         (width / 3) - BOARD_PADDING * 2,
         50,
     )
-    buttonText = mediumFont.render("AI Move", True, BLACK)
-    buttonRect = buttonText.get_rect()
-    buttonRect.center = aiButton.center
-    pygame.draw.rect(screen, WHITE, aiButton)
-    screen.blit(buttonText, buttonRect)
-
-    # Reset button
-    resetButton = pygame.Rect(
+    reset_button_rect = pygame.Rect(
         (2 / 3) * width + BOARD_PADDING,
         (1 / 3) * height + 20,
         (width / 3) - BOARD_PADDING * 2,
         50,
     )
-    buttonText = mediumFont.render("Reset", True, BLACK)
-    buttonRect = buttonText.get_rect()
-    buttonRect.center = resetButton.center
-    pygame.draw.rect(screen, WHITE, resetButton)
-    screen.blit(buttonText, buttonRect)
-
-    # Main Menu button
-    mainMenuButton = pygame.Rect(
+    main_menu_button_rect = pygame.Rect(
         (2 / 3) * width + BOARD_PADDING,
         (1 / 3) * height + 90,
         (width / 3) - BOARD_PADDING * 2,
         50,
     )
-    buttonText = mediumFont.render("Main Menu", True, BLACK)
-    buttonRect = buttonText.get_rect()
-    buttonRect.center = mainMenuButton.center
-    pygame.draw.rect(screen, WHITE, mainMenuButton)
-    screen.blit(buttonText, buttonRect)
+
+    draw_button(ai_button_rect, "AI Move", ai_button_rect.center, screen, mediumFont)
+    draw_button(
+        reset_button_rect, "Reset", reset_button_rect.center, screen, mediumFont
+    )
+    draw_button(
+        main_menu_button_rect,
+        "Main Menu",
+        main_menu_button_rect.center,
+        screen,
+        mediumFont,
+    )
 
     # Display text
     text = "Lost" if lost else "Won" if game.mines == flags else ""
@@ -243,7 +250,7 @@ while True:
         mouse = pygame.mouse.get_pos()
 
         # If AI button clicked, make an AI move
-        if aiButton.collidepoint(mouse) and not lost:
+        if ai_button_rect.collidepoint(mouse) and not lost:
             move = ai.make_safe_move()
             if move is None:
                 move = ai.make_random_move()
@@ -257,12 +264,12 @@ while True:
             time.sleep(0.2)
 
         # Reset game state
-        elif resetButton.collidepoint(mouse):
+        elif reset_button_rect.collidepoint(mouse):
             reset_game()
             continue
 
         # Return to main menu
-        elif mainMenuButton.collidepoint(mouse):
+        elif main_menu_button_rect.collidepoint(mouse):
             instructions = True
             continue
 
